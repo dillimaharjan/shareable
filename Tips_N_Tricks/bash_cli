@@ -1,0 +1,5 @@
+Ctrl + K to delete from the cursor to the end of the line. 
+Ctrl + U to delete from the cursor to the beginning of the line.
+
+ALT + Shift + B to move a word backward
+ALT + Shift + F to move a word forward
