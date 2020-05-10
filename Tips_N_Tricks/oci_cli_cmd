@@ -1,0 +1,1 @@
+oci network vcn list --compartment-id 

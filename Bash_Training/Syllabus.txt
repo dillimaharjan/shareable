@@ -1,0 +1,35 @@
+Day 1
+    Training Environment & Shell scripting Introduction
+
+Day 2
+    Variables
+    Storing output of command to variable
+    Arithmetic operators
+    Prompt and read values
+
+Day 3
+    Condition if/else statement scripts
+    Simple If
+    If else
+    If elsif 
+    Case statement
+
+Day 4
+    Loops
+
+Day 5
+    Functions
+
+Day 6 
+    Connecting database
+    Execute script with options and arguments
+    Execute script in remote server
+    Adding script to cron
+
+Day 7
+
+Day 8
+
+Day 9
+
+Day 10
