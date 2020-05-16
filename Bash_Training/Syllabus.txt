@@ -1,12 +1,16 @@
 Day 1
     Training Environment & Shell scripting Introduction
-
+    Mostly used linux commands
+    STDIN, STDOUT and STDERR
+    Frist script
+    Variables
+    Arithmetic Operations
 Day 2
     Variables
     Storing output of command to variable
     Arithmetic operators
     Prompt and read values
-
+    Array
 Day 3
     Condition if/else statement scripts
     Simple If
@@ -28,8 +32,62 @@ Day 6
 
 Day 7
 
+Menu building
+
 Day 8
+
+Database refresh
 
 Day 9
 
+
+
 Day 10
+
+
+
+
+
+cat < input.txt > output.txt
+case EXPRESSION in
+
+  PATTERN_1)
+    STATEMENTS
+    ;;
+
+  PATTERN_2)
+    STATEMENTS
+    ;;
+
+  PATTERN_N)
+    STATEMENTS
+    ;;
+
+  *)
+    STATEMENTS
+    ;;
+esac
+
+
+
+for host in $(cat /etc/mydbhosts)
+do
+	echo${host}
+  if [[ ${host} = "*dev*"]]; then
+    continue
+  fi
+	scp patchfile.zip oracle@${host}
+done
+
+
+for host in $(cat /tmp/myhosts)
+do
+	echo ${host}
+	#scp patchfile.zip oracle@${host}
+done
+
+
+for (( cnt=1; cnt <=10 ; cnt++ ))
+do
+	echo "Value of cnt is ${cnt}"
+done
