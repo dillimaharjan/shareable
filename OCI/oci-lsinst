@@ -1,0 +1,114 @@
+#!/bin/bash
+SN=1
+
+OCI=/Users/dilli/bin/oci
+#COMP=ocid1.compartment.oc1..aaaaaaaaxlsbh5nupl72472s4fohoodk3d6347jegb25axnvyigupeqmbrmq
+COMP=$(sed -n -e '/\[DEFAULT\]/,/\[*\]/p' ~/.oci/config | grep compartment | awk -F "=" '{print $2}')
+
+
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+YELLOW="\033[1;33m"
+NC="\033[0m"
+
+declare -a arr_inst
+
+# Reading options
+
+while [[ $# -gt 0 ]]
+do
+	KEY="$1"
+	case $KEY in
+	-p|--profile)
+		PROFILE="--profile $2"
+		COMP=$(sed -n -e "/\[${2}\]/,/\[*\]/p" ~/.oci/config | grep compartment | awk -F "=" '{print $2}')
+		shift
+		shift
+	;;
+	*)
+	;;
+	esac
+done
+
+
+echo -e "---------------------------------------------------------"
+echo -e "| SN | Display Name			| Status        |"
+echo -e "---------------------------------------------------------"
+arr_inst=( $(oci compute instance list --compartment-id $COMP ${PROFILE} | egrep -w '\"id\":|lifecycle-state|display-name' | awk -F ": " '{print $2}' | sed 's/^"//g' | sed s'/",$//g') ) 
+
+if [ "$?" -ne "0" ]; then
+	echo "Error occurred"
+	exit 1
+fi
+
+
+
+
+for ((i=0;i < ${#arr_inst[@]};i=i+3))
+do
+	NAME=${arr_inst[$i]}
+	ID=${arr_inst[$i+1]}
+	STATUS=${arr_inst[$i+2]}
+	printf '|%-4s' " ${SN}."
+	printf '|%-34s' " ${NAME}"
+	printf "|"
+	case ${STATUS} in
+	TERMINATED )
+		printf "$YELLOW"
+	;;
+	STOPPED )
+		printf "${RED}" 
+	;;
+	RUNNING )
+		printf "${GREEN}"
+	;;
+	* )
+		printf "${NC}"
+	;;
+	esac
+	printf '%-15s' " ${STATUS}"
+	printf "${NC}"
+	printf "|"
+	echo
+	#echo -e "|${SN} |  ${NAME}		| ${STATUS}			|"
+
+	SN=$(( SN + 1 ))
+done
+echo -e "---------------------------------------------------------"
+echo ${arr_inst[@]} > .oci-lsinst.tmp
+read -p "Do you want to change status of Instance (Y/N) [Y]: " opt
+[ "$opt" == "" ] && opt="Y"
+opt=$(echo ${opt} | tr '[:lower:]' '[:upper:]')
+if [ "$opt" == 'Y' ] || [ "$opt" == 'YES' ]; then
+	read -p "enter the SN of instance :" sn
+	if ! [[ "$sn" =~ ^[0-9]+$ ]]; then
+		echo "Numbers only allowed"
+		exit 1
+	fi
+	let 'ind=(1 + ((sn - 1) * 3))'
+	if [ "$ind" -gt ${#arr_inst[@]} ] || [ "$ind" -lt 0 ]; then
+		echo "Entered value does not match with the list of sn"
+		exit
+	fi
+	echo "Instance ${arr_inst[$ind-1]} is in state ${arr_inst[$ind+1]}"
+	if [ "${arr_inst[$ind+1]}" == "RUNNING" ]; then
+		future_state="STOPPED"
+		action_required="stop"
+	elif [ "${arr_inst[$ind+1]}" == "STOPPED" ]; then
+		future_state="RUNNING"
+		action_required="start"
+	else
+		future_state="UNKNOWN"
+                action_required="no"
+		echo "No action required for Instance ${arr_inst[$ind-1]}"
+		exit 1
+	fi
+	read -p "Do you want to change state of instance to ${future_state}(Y/N) [Y]: " opt
+	[ "$opt" == "" ] && opt="Y"
+	opt=$(echo ${opt} | tr '[:lower:]' '[:upper:]')
+	if [ "$opt" == 'Y' ] || [ "$opt" == 'YES' ]; then
+		oci compute instance action --action ${action_required} --instance-id ${arr_inst[$ind]}  ${PROFILE} > /dev/null
+	fi
+	vid=$(oci compute vnic-attachment list --compartment-id ${COMP} ${PROFILE} --instance-id ${arr_inst[$ind]} | grep "vnic-id"|awk -F ":" '{print $2}' | sed s/\"//g)
+	oci network vnic get --vnic-id ${vid} ${PROFILE} | grep "ip\":"
+fi
