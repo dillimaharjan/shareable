@@ -1,1 +1,2 @@
 Terraform/Configurations/env_vars
+Terraform/Configurations/*/*.tfstate*
