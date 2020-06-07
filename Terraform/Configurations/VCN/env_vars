@@ -1,0 +1,19 @@
+### Authentication details
+export TF_VAR_tenancy_ocid=ocid1.tenancy.oc1..aaaaaaaa6hqeaaiu4j6osmqi3e4e5ncq7e7sa5ydzzd33bquycny3rbxvwpq
+export TF_VAR_user_ocid=ocid1.user.oc1..aaaaaaaaopze2yacu4zbonu6irsd3x7hrvc5npqofc2uvlhidmab7yfizada
+export TF_VAR_fingerprint="e6:64:86:fd:16:15:32:fa:24:64:6d:56:a6:64:6d:51"
+export TF_VAR_private_key_path="//Users//dilli//.oci//oci_api_key.pem"
+### Region
+export TF_VAR_region="us-ashburn-1"
+
+### Compartment
+export TF_VAR_compartment_ocid=ocid1.compartment.oc1..aaaaaaaab3putcdaqhecakltz55supy2mkfumaojtlqc3ctyctczpdxklqyq
+
+### Subnet
+# export TF_VAR_subnet_ocid="ocid1.subnet.oc1.iad.aaaaaaaaejvnkwe4syomfffgmqjbqlutlljd7f2uc5lle77dkfua2bjydupq"
+
+### Public/private keys used on the instance
+export TF_VAR_ssh_public_key=$(cat /Users/dilli/.ssh/id_rsa.pub)
+export TF_VAR_ssh_private_key=$(cat /Users/dilli/.ssh/id_rsa)
+## NOTE: These are not your api keys. More info on the right keys see
+## https://docs.us-phoenix-1.oraclecloud.com/Content/Compute/Tasks/managingkeypairs.htm

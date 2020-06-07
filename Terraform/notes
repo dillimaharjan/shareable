@@ -1,0 +1,64 @@
+Terraform is the infrastructure as code offering from HashiCorp.
+It is a tool for building, changing, and managing infrastructure in a safe, repeatable way. Operators and Infrastructure teams can use Terraform to manage environments with a configuration language called the HashiCorp Configuration Language (HCL) for human-readable, automated deployments.
+
+Day to Day life. Infrastructure means buildings, roads, Flyovers, bridges
+IT world Infrastructure means
+    compute instance
+    Routers
+    Switches
+    load balancers
+    Storages
+    Databases
+
+Infrastructure as Code
+    It is the process of managing infrastructure in a file or files rather than manually configuring resources in a user interface.
+    Terraform allows operators to use HCL to author files containing definitions of their desired resources on almost any provider (AWS, GCP, GitHub, Docker, OCI etc) and automates the creation of those resources at the time of apply.
+
+Workflows
+    Scope : Confirm what resources need to be created for a given project.
+    Author : Create the configuration file in HCL based on the scoped parameters
+    Initialize : Init will download the correct provider plug-ins for the project. terraform Init
+    Plan & Apply : Run terraform plan to verify creation process and then terraform apply to create real resources as well as state file that compares future changes in your configuration files to what actually exists in your deployment environment.
+
+Advantages of Terraform
+    Platform Agnostic
+        can manage a heterogenous environment (AWS, GCP, OCI etc) with the same workflow by creating a configuration file
+    State Management
+        Terraform uses this local state to create plans and make changes to your infrastructure
+        Terraform state is the source of truth by which configuration changes are measured.
+        If any changes is made to the configration file, terraform compares those with the state file to determine what changes result in a new resource.
+    Operator Confidence
+        terraform apply, the user will be prompted to review the proposed changes and must affirm the changes or else Terraform will not apply the proposed plan.
+
+Installation is quiet easy. Follow the path https://www.terraform.io/downloads.html
+    Installation notes in the windows and Linux
+
+
+terraform --version
+
+
+terraform -install-autocomplete
+
+Provider
+The provider block configures the named provider, in our case aws, which is responsible for creating and managing resources. A provider is a plugin that Terraform uses to translate the API interactions with the service. A provider is responsible for understanding API interactions and exposing resources. Because Terraform can interact with any API, you can represent almost any infrastructure type as a resource in Terraform.
+
+The profile attribute in your provider block refers Terraform to the AWS credentials stored in your AWS Config File, which you created when you configured the AWS CLI. HashiCorp recommends that you never hard-code credentials into *.tf configuration files. We are explicitly defining the default AWS config profile here to illustrate how Terraform should access sensitive credentials.
+
+Multiple provider blocks can exist if a Terraform configuration manages resources from different providers. You can even use multiple providers together. For example you could pass the ID of an AWS instance to a monitoring resource from DataDog.
+
+
+Resource 
+The resource block defines a piece of infrastructure. A resource might be a physical component such as an EC2 instance, or it can be a logical resource such as a Heroku application.
+
+The resource block has two strings before the block: the resource type and the resource name. 
+
+Init
+When you create a new configuration — or check out an existing configuration from version control — you need to initialize the directory with terraform init.
+
+Terraform uses a plugin-based architecture to support hundreds of infrastructure and service providers. Initializing a configuration directory downloads and installs providers used in the configuration, which in this case is the aws provider. Subsequent commands will use local settings and data during initialization.
+
+
+Inspect the current state using terraform show.
+
+
+Terraform has a built in command called terraform state for advanced state management. For example, if you have a long state file, you may want a list of the resources in state, which you can get by using the list subcommand.
