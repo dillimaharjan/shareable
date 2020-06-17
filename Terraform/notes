@@ -62,3 +62,7 @@ Inspect the current state using terraform show.
 
 
 Terraform has a built in command called terraform state for advanced state management. For example, if you have a long state file, you may want a list of the resources in state, which you can get by using the list subcommand.
+
+
+
+Unlike many other objects in the Terraform language, a provider block may be omitted if its contents would otherwise be empty. Terraform assumes an empty default configuration for any provider that is not explicitly configured.

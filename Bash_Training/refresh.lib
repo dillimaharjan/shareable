@@ -1,0 +1,361 @@
+# Functions to log message
+logMsg ()
+{
+    if [ "$2" == "" ]; then
+        LOG_LEVEL="INFO"
+    else
+        LOG_LEVEL=$2
+    fi
+    echo "$(date +%Y-%m-%d_%H:%M:%S): ${LOG_LEVEL}: $1" | tee -a ${LOG_FILE}
+}
+
+# Function Module start
+startModule()
+{
+    echo "####################################################################################################" | tee -a ${LOG_FILE}
+    logMsg "Starting Task $1"
+}
+
+# Function Module end
+endModule()
+{
+    if [ $2 -gt 0 ]; then
+        logMsg "End of Task $1, with errors, existing current process"
+        SUBJECT="Attention: Database ${DEST_DB} refreshed Failed during ${1} on date ${DATE_N_TIME}"
+        emailSummary
+        echo "Refresh task failed. Please check log file ${LOG_FILE} for detail info"
+        echo "Refresh task failed" >> ${LOG_FILE}
+        exit 1
+    else
+        logMsg "Task $1 completed successfully"
+        echo "####################################################################################################" | tee -a ${LOG_FILE}
+    fi
+}
+
+# Function to check directory exists or not
+checkDir()
+{
+    if [ ! -e $1 ]; then
+        mkdir -p $1
+        logMsg "Directory $1 created"
+    fi
+}
+
+# Function to set DB environment
+setEnv()
+{
+    export ORACLE_SID=${1}
+    export ORAENV_ASK=NO
+    . oraenv | tee -a ${LOG_FILE}
+    export ORAENV_ASK=YES
+    export SQLPATH=${SCRIPT_DIR}
+}
+
+# Refresh environment variables
+exportEnv()
+{
+    export ORACLE_SID=${DEST_DB}
+    export ORACLE_HOME=$ORACLEHOME
+    export ORACLE_BASE=$ORACLEBASE
+    export PATH=$ORACLE_HOME/bin:$PATH
+}
+
+# Saves User credentials for post refresh
+saveUserCredentail()
+{
+    startModule "Saving User credential for post refresh"
+    setEnv ${DEST_DB}
+    ${ORACLE_HOME}/bin/sqlplus -s "${SERVAUX} as sysdba"<<EOF >> ${LOG_FILE}
+@${SCRIPT_DIR}/get_passwords.sql
+spool ${SCRIPT_DIR}/reset_passwords.sql
+
+select 'alter user '||a.username||' identified by values '||''''||b.password||''''||' account unlock;'
+from dba_users a, sys.user$ b
+where a.user_id = b.user#
+  and a.account_status = 'OPEN';
+
+spool off
+exit;
+EOF
+    endModule "Saved User credential for post refresh" $?
+}
+
+# Save datafiles, controlfiles, redologs, tempfiles to verify they are cleaned properly
+saveDBFiles()
+{
+    startModule "Saving Database files to array to validate later"
+    setEnv ${DEST_DB}
+    DBFILES=( $(${ORACLE_HOME}/bin/sqlplus -s ${SERVAUX} as sysdba<<EOF
+    set feedback off heading off
+    select name from v\$datafile union
+    select name from v\$tempfile union
+    select member from v\$logfile union
+    select name from v\$controlfile order by 1;
+    exit;
+EOF
+) )
+    endModule "Saving Database files to array to validate later" $?
+}
+
+# Drop Auxuliary database before duplicating
+dropAUXDB()
+{
+    startModule "Drop Database"
+    setEnv ${DEST_DB}
+    $ORACLE_HOME/bin/sqlplus ${SERVAUX} as sysdba<<EOF >> ${LOG_FILE}
+    startup force restrict exclusive mount;
+    drop database;
+    exit;
+EOF
+    endModule "Drop Database" $?
+}
+
+# Function to check the files and exit if database files still exist.
+validateDBfilesDrop()
+{
+    startModule "Checking files are completely deleted or not"
+    for i in ${DBFILES[@]}; do
+        echo "Datafile name is ${i}"
+        # Check if filename begins with + sign then it is ASM File need to confirm with asmcmd
+        if [ ${i:0:1} == '+' ]; then
+            echo "$i is an ASM FILES"
+            setEnv "$(/bin/cat /etc/oratab|grep -v "^#" | grep "ASM" | awk -F ":" '{print $1}' | head -n1)"
+            ${ORACLE_HOME}/bin/asmcmd ls -l ${i} >> ${LOG_FILE} 2>&1
+            if [ $? -eq 0 ]; then
+                logMsg "Oracle Database File ${i}, still exists. Please check file and delete before moving ahead" "ERR"
+                exit 1
+            fi
+        else
+            if [ -e ${i} ]; then
+                logMsg "Oracle Database File ${i}, still exists. Please check file and delete before moving ahead" "ERR"
+                exit 1
+            fi
+        fi
+    done
+    setEnv ${DEST_DB}
+    endModule "Checking files completed with exit status" $?
+}
+
+
+# Create rman script to duplicate database, Keyword spfile can be used to copy SPFILE
+createRMANScript()
+{
+startModule "Creating RMAN script"
+cat <<EOF > ${RMAN_REST_CONTROLFILE_SCRIPT}
+startup nomount pfile='${INITGOLD}';
+create spfile from pfile='${INITGOLD}';
+shutdown immediate;
+startup nomount;
+allocate channel for maintenance device type disk;
+run {
+set dbid ${SOURCE_DBID}
+set  UNTIL TIME "TO_DATE('${DATE_ONLY} 02:00:00', 'YYYY-MM-DD HH24:MI:SS')";
+restore controlfile from autobackup;
+}
+alter database mount;
+EOF
+cat <<EOF > ${RMAN_DB_REST_RECO_SCRIPT}
+reset database to incarnation 3;
+allocate channel for maintenance device type disk;
+run {
+set newname for database to '/u01/app/oracle/oradata/dev' ;
+set  UNTIL TIME "TO_DATE('${DATE_ONLY} 02:00:00', 'YYYY-MM-DD HH24:MI:SS')";
+restore database;
+switch datafile all;
+switch tempfile all;
+recover database;
+}
+
+exit;
+EOF
+    endModule "Creating RMAN script" $?
+}
+
+# Create password file and spfile
+createPwdfile()
+{
+
+    startModule "Create Password file"
+    setEnv ${SOURCE_DB}
+    ${ORACLE_HOME}/bin/orapwd file=${PWDFILE} password=${SYSPASS} force=y
+    ${ORACLE_HOME}/bin/orapwd file=${PWDFILE_t} password=${SYSPASS} force=y
+    endModule "Creating password file" $?
+
+}
+
+# Function to start database
+startDB()
+{
+    startModule "Starting database"
+    if [ $(/bin/ps -ef | /bin/grep ora_pmon_${DEST_DB} | /bin/grep -v grep | /usr/bin/wc -l) -eq 0 ]; then
+    sqlplus sys/${SYSPASS}@${1} as sysdba <<EOF >> $LOG_FILE
+    startup $2
+    exit;
+EOF
+    fi
+   endModule "Starting database" $?
+}
+
+# Function to drop additional redologs
+# Block change tracking is not available in DEV database
+# I do not need huge number of redolog groups in dev so dropping them
+# database failed to start
+dropRedologs()
+{
+   setEnv ${SOURCE_DB} >> ${LOG_FILE}
+   ${ORACLE_HOME}/bin/sqlplus "${SERVAUX} as sysdba" <<EOF >>${LOG_FILE}
+alter database disable block change tracking;
+alter database drop logfile group 11;
+alter database drop logfile group 12;
+alter database drop logfile group 13;
+alter database drop logfile group 14;
+alter database drop logfile group 21;
+alter database drop logfile group 22;
+alter database drop logfile group 23;
+alter database drop logfile group 24;
+alter database drop logfile group 25;
+alter database drop logfile group 31;
+alter database drop logfile group 32;
+alter database drop logfile group 33;
+alter database drop logfile group 34;
+alter database drop logfile group 35;
+alter database noarchivelog;
+alter database open resetlogs;
+EOF
+}
+
+# Function to start Duplicate of Database.
+execRMANDuplicate()
+{
+    retval=0
+    startModule "RMAN restore and recover"
+    setEnv ${SOURCE_DB} >> ${LOG_FILE}
+    ${ORACLE_HOME}/bin/rman target ${SERVAUX} catalog ${SERVCAT} cmdfile=${RMAN_REST_CONTROLFILE_SCRIPT} log=${LOG_FILE} append
+    retval=$?
+    endModule "RMAN spfile and controlfile restore" ${retval}
+    echo "Return value of RMAN Controlfile restore: $?" >> ${LOG_FILE}
+    ${ORACLE_HOME}/bin/rman target ${SERVAUX} cmdfile=${RMAN_DB_REST_RECO_SCRIPT} log=${LOG_FILE} append
+    retval=$?
+    endModule "RMAN Database restore and recover" ${retval}
+    echo "Return value of RMAN database recover/restore: ${retval}" >> ${LOG_FILE}
+    dropRedologs
+}
+
+
+# Function to rename existing DB
+renameDestDB()
+{
+    startModule "Rename Database"
+    setEnv ${SOURCE_DB}
+    ${ORACLE_HOME}/bin/sqlplus "${SERVAUX} as sysdba" <<EOF >>${LOG_FILE}
+    select name,open_mode,to_char(startup_time, 'HH24:MI DD-MON-YY') "Startup time" from v\$database, v\$instance;
+    shutdown immediate
+    startup mount;
+EOF
+    ${ORACLE_HOME}/bin/nid target=sys/${SYSPASS} DBNAME=${DEST_DB} LOGFILE=${LOG_FILE} append=yes
+    sleep 30
+    logMsg "Copying password and spfile of DB ${SOURCE_DB} to DB ${DEST_DB}"
+    cp -vf ${ORACLE_HOME}/dbs/spfile${SOURCE_DB}.ora ${ORACLE_HOME}/dbs/spfile${DEST_DB}.ora >>${LOG_FILE}
+    cp -vf ${ORACLE_HOME}/dbs/orapw${SOURCE_DB} ${ORACLE_HOME}/dbs/orapw${DEST_DB} >>${LOG_FILE}
+
+    setEnv ${DEST_DB} >> ${LOG_FILE}
+    ${ORACLE_HOME}/bin/sqlplus "sys/${SYSPASS}@${TNSAUX} as sysdba" <<EOF >>${LOG_FILE}
+    startup nomount
+    alter system set db_name=${DEST_DB} scope=spfile;
+    alter system set db_unique_name=${DEST_DB} scope=spfile;
+    alter system set service_names=${DEST_DB} scope=spfile;
+    alter system set local_listener='(ADDRESS=(PROTOCOL=tcps)(HOST=192.168.0.1)(PORT=2484))';
+    alter system set instance_number=1 scope=spfile;
+
+    startup mount force
+    alter database open resetlogs;
+EOF
+    endModule "Rename Database" $?
+}
+
+# Function to check database status
+checkDBStatus()
+{
+    if [ $(/bin/ps -ef | /bin/grep ora_pmon_${1} | /bin/grep -v grep | /usr/bin/wc -l) -eq 0 ]; then
+        echo "DB started"
+    fi
+}
+
+# Create exportDirector to begin export
+createExportDir()
+{
+    startModule "Creating export Directory"
+    setEnv ${DEST_DB}
+    ${ORACLE_HOME}/bin/sqlplus "${SERVAUX} as sysdba" <<EOF >>${LOG_FILE}
+    select name,open_mode,to_char(startup_time, 'HH24:MI DD-MON-YY') "Startup time" from v\$database, v\$instance;
+    create or replace directory ${EXPDIR} as '${EXPDIROS}';
+    grant read, write on directory ${EXPDIR} to public;
+    exit;
+EOF
+    endModule "Export Directory created" $?
+}
+
+# Backup auxiliary database before refresh
+backupAUXDB()
+{
+    startModule "Starting backup of destination db"
+    setEnv "${DEST_DB}"
+    ${ORACLE_HOME}/bin/expdp \"sys/${SYSPASS} as sysdba\" directory=${EXPDIR} dumpfile=${DEST_DB}_${DATE_N_TIME}.dmp logfile=${DEST_DB}_${DATE_N_TIME}.log full=y >> ${LOG_FILE}
+    /usr/bin/gzip ${DEST_DB}_${DATE_N_TIME}.dmp
+    endModule "Backup of destination db completed " $?
+}
+
+performPostRefresh()
+{
+   startModule "Staring Post Refresh task"
+   setEnv "${DEST_DB}"
+   ${ORACLE_HOME}/bin/sqlplus -s "${SERVAUX}@${TNSAUX} as sysdba"<<EOF >> ${LOG_FILE}
+   @reset_passwords.sql
+   exit;
+EOF
+   endModule "Post Refresh " $?
+}
+
+applyDatapatch()
+{
+        echo "Starting datapatch job temporarily till Prod database has been
+patched" >> ${LOG_FILE}
+        setEnv "${DEST_DB}"
+        ${ORACLE_HOME}/bin/sqlplus -s "/ as sysdba"<<EOF >> ${LOG_FILE}
+        shutdown immediate;
+        startup upgrade;
+        exit;
+EOF
+
+        ${ORACLE_HOME}/OPatch/datapatch -verbose >> ${LOG_FILE}
+
+        ${ORACLE_HOME}/bin/sqlplus -s "/ as sysdba"<<EOF >> ${LOG_FILE}
+        shutdown immediate;
+        startup;
+EOF
+   endModule "End Post Refresh task" $?
+
+}
+
+cleanLogFiles()
+{
+  v_retention=$1
+  startModule "Cleaning Logfile"
+  find ${LOG_DIR} -type f -iname 'refresh_${SOURCE_DB}_${DEST_DB}_*' -mtime +${v_retention} -exec rm {} \; >> ${LOG_FILE}
+  endModule "Clean logfiles" $?
+}
+
+emailSummary()
+{
+    startModule "Sending email"
+echo -e "Hi DBA,
+
+Please find the attachment with all details of the refresh task on date ${DATE_ONLY}.
+
+
+Regards,
+Refresh Script
+" | mailx -a "${LOG_FILE}" -s "${SUBJECT}" -r ${RETURNADDR} ${RECIPIENTS[@]}
+
+    endModule "Sending email" $?
+}
