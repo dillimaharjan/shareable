@@ -66,3 +66,43 @@ Terraform has a built in command called terraform state for advanced state manag
 
 
 Unlike many other objects in the Terraform language, a provider block may be omitted if its contents would otherwise be empty. Terraform assumes an empty default configuration for any provider that is not explicitly configured.
+
+Each time a new provider is added to configuration -- either explicitly via a provider block or by adding a resource from that provider -- Terraform must initialize the provider before it can be used. Initialization downloads and installs the provider's plugin so that it can later be executed.
+
+
+
+
+terraform {
+    required_providers {
+        oci             = "= 3.60"
+        }
+}
+
+
+to enforce the version of provider
+
+= (or no operator): exact version equality
+
+!=: version not equal
+
+>, >=, <, <=: version comparison, where "greater than" is a larger version number
+
+~>: pessimistic constraint operator, constraining both the oldest and newest version allowed. For example, ~> 0.9 is equivalent to >= 0.9, < 1.0, and ~> 0.8.4, is equivalent to >= 0.8.4, < 0.9
+
+terraform init -upgrade
+
+alias meta-argument to an alias name to use for each additional configuration. 
+
+resource "aws_instance" "foo" {
+  provider = aws.west
+
+  # ...
+}
+
+
+.terraformrc in home directory or location set TF_CLI_CONFIG_FILE environment variable.
+
+plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"
+
+
+# Need to study from Purpose of Terraform State

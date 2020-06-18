@@ -1,0 +1,40 @@
+Error in invoking target 'irman ioracle idrdactl idrdalsnr idrdaproc' of makefile '/u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/ins_rdbms.mk'. See '/tmp/InstallActions2020-06-18_05-24-29AM/installActions2020-06-18_05-24-29AM.log' for details.
+
+
+login as user oracle and execute command below
+cd $ORACLE_HOME/rdbms/admin
+/usr/bin/make -f $ORACLE_HOME/rdbms/lib/ins_rdbms.mk ioracle
+/usr/bin/make -f $ORACLE_HOME/rdbms/lib/ins_rdbms.mk irman
+
+[oracle@ora18c dbhome_1]$ cd $ORACLE_HOME/rdbms/admin
+[oracle@ora18c admin]$ /usr/bin/make -f $ORACLE_HOME/rdbms/lib/ins_rdbms.mk ioracle
+chmod 755 /u01/app/oracle/product/18.3.0.0/dbhome_1/bin
+
+ - Linking Oracle
+rm -f /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/oracle
+/u01/app/oracle/product/18.3.0.0/dbhome_1/bin/orald  -o /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/oracle -m64 -z noexecstack -Wl,--disable-new-dtags -L/u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/ -L/u01/app/oracle/product/18.3.0.0/dbhome_1/lib/ -L/u01/app/oracle/product/18.3.0.0/dbhome_1/lib/stubs/   -Wl,-E /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/opimai.o /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/ssoraed.o /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/ttcsoi.o -Wl,--whole-archive -lperfsrv18 -Wl,--no-whole-archive /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/nautab.o /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/naeet.o /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/naect.o /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/naedhs.o /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/config.o  -ldmext -lserver18 -lodm18 -lofs -lcell18 -lnnet18 -lskgxp18 -lsnls18 -lnls18  -lcore18 -lsnls18 -lnls18 -lcore18 -lsnls18 -lnls18 -lxml18 -lcore18 -lunls18 -lsnls18 -lnls18 -lcore18 -lnls18 -lclient18  -lvsnst18 -lcommon18 -lgeneric18 -lknlopt -loraolap18 -lskjcx18 -lslax18 -lpls18  -lrt -lplp18 -ldmext -lserver18 -lclient18  -lvsnst18 -lcommon18 -lgeneric18 `if [ -f /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/libavserver18.a ] ; then echo "-lavserver18" ; else echo "-lavstub18"; fi` `if [ -f /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/libavclient18.a ] ; then echo "-lavclient18" ; fi` -lknlopt -lslax18 -lpls18  -lrt -lplp18 -ljavavm18 -lserver18  -lwwg  `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/ldflags`    -lncrypt18 -lnsgr18 -lnzjs18 -ln18 -lnl18 -lngsmshd18 -lnro18 `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/ldflags`    -lncrypt18 -lnsgr18 -lnzjs18 -ln18 -lnl18 -lngsmshd18 -lnnzst18 -lzt18 -lztkg18 -lmm -lsnls18 -lnls18  -lcore18 -lsnls18 -lnls18 -lcore18 -lsnls18 -lnls18 -lxml18 -lcore18 -lunls18 -lsnls18 -lnls18 -lcore18 -lnls18 -lztkg18 `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/ldflags`    -lncrypt18 -lnsgr18 -lnzjs18 -ln18 -lnl18 -lngsmshd18 -lnro18 `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/ldflags`    -lncrypt18 -lnsgr18 -lnzjs18 -ln18 -lnl18 -lngsmshd18 -lnnzst18 -lzt18 -lztkg18   -lsnls18 -lnls18  -lcore18 -lsnls18 -lnls18 -lcore18 -lsnls18 -lnls18 -lxml18 -lcore18 -lunls18 -lsnls18 -lnls18 -lcore18 -lnls18 `if /usr/bin/ar tv /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/libknlopt.a | grep "kxmnsd.o" > /dev/null 2>&1 ; then echo " " ; else echo "-lordsdo18 -lserver18"; fi` -L/u01/app/oracle/product/18.3.0.0/dbhome_1/ctx/lib/ -lctxc18 -lctx18 -lzx18 -lgx18 -lctx18 -lzx18 -lgx18 -lordimt -lclscest18 -loevm -lclsra18 -ldbcfg18 -lhasgen18 -lskgxn2 -lnnzst18 -lzt18 -lxml18 -lgeneric18 -locr18 -locrb18 -locrutl18 -lhasgen18 -lskgxn2 -lnnzst18 -lzt18 -lxml18 -lgeneric18  -lgeneric18 -lorazip -loraz -llzopro5 -lorabz2 -lipp_z -lipp_bz2 -lippdcemerged -lippsemerged -lippdcmerged  -lippsmerged -lippcore  -lippcpemerged -lippcpmerged  -lsnls18 -lnls18  -lcore18 -lsnls18 -lnls18 -lcore18 -lsnls18 -lnls18 -lxml18 -lcore18 -lunls18 -lsnls18 -lnls18 -lcore18 -lnls18 -lsnls18 -lunls18  -lsnls18 -lnls18  -lcore18 -lsnls18 -lnls18 -lcore18 -lsnls18 -lnls18 -lxml18 -lcore18 -lunls18 -lsnls18 -lnls18 -lcore18 -lnls18 -lasmclnt18 -lcommon18 -lcore18  -ledtn18 -laio -lons  -lfthread18   `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/sysliblist` -Wl,-rpath,/u01/app/oracle/product/18.3.0.0/dbhome_1/lib -lm    `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/sysliblist` -ldl -lm   -L/u01/app/oracle/product/18.3.0.0/dbhome_1/lib `test -x /usr/bin/hugeedit -a -r /usr/lib64/libhugetlbfs.so && test -r /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/shugetlbfs.o && echo -Wl,-zcommon-page-size=2097152 -Wl,-zmax-page-size=2097152 -lhugetlbfs`
+rm -f /u01/app/oracle/product/18.3.0.0/dbhome_1/bin/oracle
+mv /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/oracle /u01/app/oracle/product/18.3.0.0/dbhome_1/bin/oracle
+chmod 6751 /u01/app/oracle/product/18.3.0.0/dbhome_1/bin/oracle
+(if [ ! -f /u01/app/oracle/product/18.3.0.0/dbhome_1/bin/crsd.bin ]; then \
+    getcrshome="/u01/app/oracle/product/18.3.0.0/dbhome_1/srvm/admin/getcrshome" ; \
+    if [ -f "$getcrshome" ]; then \
+        crshome="`$getcrshome`"; \
+        if [ -n "$crshome" ]; then \
+            if [ $crshome != /u01/app/oracle/product/18.3.0.0/dbhome_1 ]; then \
+                oracle="/u01/app/oracle/product/18.3.0.0/dbhome_1/bin/oracle"; \
+                $crshome/bin/setasmgidwrap oracle_binary_path=$oracle; \
+            fi \
+        fi \
+    fi \
+fi\
+);
+[oracle@ora18c admin]$ /usr/bin/make -f $ORACLE_HOME/rdbms/lib/ins_rdbms.mk irman
+
+ - Linking recovery manager (rman)
+rm -f /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/rman
+/u01/app/oracle/product/18.3.0.0/dbhome_1/bin/orald -o /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/rman -m64 -z noexecstack -Wl,--disable-new-dtags -L/u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/ -L/u01/app/oracle/product/18.3.0.0/dbhome_1/lib/ -L/u01/app/oracle/product/18.3.0.0/dbhome_1/lib/stubs/   /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/s0main.o /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/sskrmed.o /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/skrmpt.o -lclntsh -lclntshcore -ldbtools18 -lclient18 -lsql18 -lpls18  -lrt -lplp18 -lsnls18 -lunls18 -lnls18 -lslax18 -lpls18  -lrt -lplp18 /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/libplc18.a -lclntsh -lclntshcore  `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/ldflags`    -lncrypt18 -lnsgr18 -lnzjs18 -ln18 -lnl18 -lngsmshd18 -lnro18 `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/ldflags`    -lncrypt18 -lnsgr18 -lnzjs18 -ln18 -lnl18 -lngsmshd18 -lnnz18 -lzt18 -lztkg18 -lztkg18 -lclient18 -lnnetd18  -lcommon18 -lgeneric18 -lmm -lsnls18 -lnls18  -lcore18 -lsnls18 -lnls18 -lcore18 -lsnls18 -lnls18 -lxml18 -lcore18 -lunls18 -lsnls18 -lnls18 -lcore18 -lnls18 `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/ldflags`    -lncrypt18 -lnsgr18 -lnzjs18 -ln18 -lnl18 -lngsmshd18 -lnro18 `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/ldflags`    -lncrypt18 -lnsgr18 -lnzjs18 -ln18 -lnl18 -lngsmshd18 -lclient18 -lnnetd18  -lcommon18 -lgeneric18   -lsnls18 -lnls18  -lcore18 -lsnls18 -lnls18 -lcore18 -lsnls18 -lnls18 -lxml18 -lcore18 -lunls18 -lsnls18 -lnls18 -lcore18 -lnls18 -lclient18 -lnnetd18  -lcommon18 -lgeneric18 -lsnls18 -lnls18  -lcore18 -lsnls18 -lnls18 -lcore18 -lsnls18 -lnls18 -lxml18 -lcore18 -lunls18 -lsnls18 -lnls18 -lcore18 -lnls18   `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/sysliblist` -Wl,-rpath,/u01/app/oracle/product/18.3.0.0/dbhome_1/lib -lm    `cat /u01/app/oracle/product/18.3.0.0/dbhome_1/lib/sysliblist` -ldl -lm   -L/u01/app/oracle/product/18.3.0.0/dbhome_1/lib
+rm -f /u01/app/oracle/product/18.3.0.0/dbhome_1/bin/rman
+mv /u01/app/oracle/product/18.3.0.0/dbhome_1/rdbms/lib/rman /u01/app/oracle/product/18.3.0.0/dbhome_1/bin/rman
+chmod 751 /u01/app/oracle/product/18.3.0.0/dbhome_1/bin/rman
+[oracle@ora18c admin]$
